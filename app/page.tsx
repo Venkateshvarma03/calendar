@@ -210,13 +210,15 @@ export default function InteractiveWallCalendar() {
   }
 
   const isDateInRange = (date: Date) => {
-    if (!selectedRange.start || !selectedRange.end) {
-      console.log('isDateInRange false - missing start or end')
+    if (!selectedRange.start) {
       return false
     }
-    const result = date >= selectedRange.start && date <= selectedRange.end
-    console.log('isDateInRange for', date, ':', result, 'range:', selectedRange)
-    return result
+    if (!selectedRange.end) {
+      // Only start is selected, check if it's the same day
+      return isSameDay(date, selectedRange.start)
+    }
+    // Both start and end are selected
+    return date >= selectedRange.start && date <= selectedRange.end
   }
 
   const isDateStart = (date: Date): boolean => {

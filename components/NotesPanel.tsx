@@ -19,15 +19,15 @@ export default function NotesPanel({
   setNotes,
   extractedColors
 }: NotesPanelProps) {
-  const [noteType, setNoteType] = useState<'month' | 'range'>('range')
+  const [noteType, setNoteType] = useState<'month' | 'range' | 'date'>('range')
   const [currentNote, setCurrentNote] = useState('')
 
   const getTargetDescription = () => {
     if (noteType === 'month') {
       return format(currentMonth, 'MMMM yyyy')
-    } else if (selectedRange.start && selectedRange.end) {
+    } else if (noteType === 'range' && selectedRange.start && selectedRange.end) {
       return `${format(selectedRange.start, 'MMM dd')} - ${format(selectedRange.end, 'MMM dd, yyyy')}`
-    } else if (selectedRange.start) {
+    } else if ((noteType === 'range' || noteType === 'date') && selectedRange.start) {
       return format(selectedRange.start, 'MMM dd, yyyy')
     } else {
       return 'Select a date range'
@@ -37,23 +37,48 @@ export default function NotesPanel({
   const canSaveNote = () => {
     if (noteType === 'month') {
       return currentNote.trim() !== ''
-    } else {
+    } else if (noteType === 'range') {
       return selectedRange.start && selectedRange.end && currentNote.trim() !== ''
+    } else {
+      // For single date notes
+      return selectedRange.start && currentNote.trim() !== ''
     }
   }
 
   const saveNote = () => {
-    if (!canSaveNote()) return
+    if (!canSaveNote()) {
+      console.log('Cannot save note:', { noteType, currentNote: currentNote.trim(), selectedRange })
+      return
+    }
 
-    const newNote = {
-      id: Date.now().toString(),
-      date: noteType === 'month' ? format(currentMonth, 'yyyy-MM') : format(selectedRange.start!, 'yyyy-MM-dd'),
-      content: currentNote.trim(),
-      type: noteType,
-      ...(noteType === 'range' && {
-        startDate: format(selectedRange.start!, 'yyyy-MM-dd'),
-        endDate: format(selectedRange.end!, 'yyyy-MM-dd')
-      })
+    let newNote
+    if (noteType === 'month') {
+      newNote = {
+        id: Date.now().toString(),
+        date: format(currentMonth, 'yyyy-MM'),
+        content: currentNote.trim(),
+        type: 'month' as const
+      }
+    } else if (noteType === 'range' && selectedRange.start && selectedRange.end) {
+      newNote = {
+        id: Date.now().toString(),
+        date: format(selectedRange.start, 'yyyy-MM-dd'),
+        content: currentNote.trim(),
+        type: 'range' as const,
+        startDate: format(selectedRange.start, 'yyyy-MM-dd'),
+        endDate: format(selectedRange.end, 'yyyy-MM-dd')
+      }
+    } else if (selectedRange.start) {
+      // Single date note (when range is not complete)
+      newNote = {
+        id: Date.now().toString(),
+        date: format(selectedRange.start, 'yyyy-MM-dd'),
+        content: currentNote.trim(),
+        type: 'date' as const
+      }
+    } else {
+      console.log('Cannot save note: invalid state')
+      return
     }
 
     console.log('Saving note:', newNote)
@@ -128,6 +153,16 @@ export default function NotesPanel({
             }`}
           >
             Range
+          </button>
+          <button
+            onClick={() => setNoteType('date')}
+            className={`px-3 py-1 rounded-lg text-sm transition-colors duration-200 ${
+              noteType === 'date'
+                ? 'bg-blue-500 text-white'
+                : 'bg-white/20 text-white'
+            }`}
+          >
+            Date
           </button>
         </div>
       </div>
