@@ -82,7 +82,7 @@ export default function NotesPanel({
     } else if (noteType === 'date' && selectedRange.start) {
       return notes.filter(note => 
         note.type === 'date' && 
-        note.date === format(selectedRange.start, 'yyyy-MM-dd')
+        note.date === format(selectedRange.start!, 'yyyy-MM-dd')
       )
     }
     return []
